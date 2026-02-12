@@ -1,0 +1,49 @@
+# 🔑 Environment and configuration files
+.env
+.env.local
+.env.development.local
+.env.development
+.env.production.local
+.env.production
+
+# 🐍 Virtual environment and Python cache
+venv/
+.venv
+__pycache__/
+.cache
+*.pyc
+*.pyo
+*.pyd
+
+# 📝 Logs and local databases
+*.log
+logs/
+result.log
+firebase-debug.log
+*.sqlite3
+
+# 🖥 System files
+.DS_Store
+Thumbs.db
+
+# 📂 Data (exclude if not needed in repo)
+data/
+corpus.jsonl
+models/   
+assistant_test_demo.py
+
+# 🧪 Notebooks
+*.ipynb
+coverage/
+
+# 🔑 Firebase credentials
+config/firebaseServiceAccount.json
+service-account.json
+
+# ⚙️ IDE/editor config
+.vscode/
+.idea/
+
+# 🔐 Certificates and logs
+certs/
+
