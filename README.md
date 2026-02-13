@@ -1,3 +1,14 @@
+---
+title: CodeUniverse AI Assistant
+emoji: 💻
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # Project AI Assistant
 
 FastAPI-based AI Assistant for the Collaboration Platform.  
