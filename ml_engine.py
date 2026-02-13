@@ -1,4 +1,5 @@
 from llama_cpp import Llama
+from huggingface_hub import hf_hub_download
 import os
 import traceback
 import re
@@ -7,24 +8,25 @@ _llm = None
 
 def _load_model():
     """
-    Load the Llama model from the path defined in environment variables.
-
+    Load the Llama model, downloading it from Hugging Face Hub if needed.
     Environment Variables:
-        MODEL_PATH (str): Path to the GGUF model file.
-
-    Raises:
-        FileNotFoundError: If the model file is not found.
-        RuntimeError: If MODEL_PATH is not set in environment variables.
+        HF_REPO_ID (str): Hugging Face repository ID.
+        HF_FILENAME (str): Model filename to download.
+        HF_LOCAL_DIR (str): Local directory to store the model.
     """
     global _llm
     if _llm is not None:
         return
 
-    model_path = os.getenv("MODEL_PATH")
-    if not model_path:
-        raise RuntimeError("MODEL_PATH is not set in environment variables")
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model not found at {model_path}")
+    repo_id = os.getenv("HF_REPO_ID", "TheBloke/CodeLlama-7B-Instruct-GGUF")
+    filename = os.getenv("HF_FILENAME", "codellama-7b-instruct.Q4_K_M.gguf")
+    local_dir = os.getenv("HF_LOCAL_DIR", "./models")
+
+    model_path = hf_hub_download(
+        repo_id=repo_id,
+        filename=filename,
+        local_dir=local_dir
+    )
 
     _llm = Llama(
         model_path=model_path,
@@ -37,18 +39,6 @@ def _load_model():
 
 
 def generate_response(prompt: str, max_tokens: int = 128, temperature: float = 0.7, stop=None) -> str:
-    """
-    Generate a response from the model.
-
-    Args:
-        prompt (str): Input text prompt.
-        max_tokens (int): Maximum number of tokens to generate.
-        temperature (float): Sampling temperature.
-        stop (list, optional): Stop tokens.
-
-    Returns:
-        str: Generated text response.
-    """
     try:
         _load_model()
         output = _llm(
@@ -66,7 +56,6 @@ def generate_response(prompt: str, max_tokens: int = 128, temperature: float = 0
     except Exception as e:
         print("Error in generate_response:", traceback.format_exc())
         return f"❌ Error: {str(e)}"
-
 
 def generate_code(prompt: str, language: str = "python") -> str:
     """

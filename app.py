@@ -1,7 +1,8 @@
 import os
 import time
 import traceback
-from fastapi import FastAPI, Request, Body, HTTPException, Depends
+import uvicorn
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import CodePrompt, CodeRequest, CodeInput
@@ -12,14 +13,12 @@ from db import connect_db, close_db
 from auth import verify_token
 from dotenv import load_dotenv
 
-# Load environment variables from .env.test if present
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(dotenv_path=os.path.join(PROJECT_ROOT, ".env.test"))
 print("TEST_MODE =", os.getenv("TEST_MODE"))
 
 app = FastAPI()
 
-# Load CORS allowed origins from environment variable
 allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -31,12 +30,6 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    """
-    Health check endpoint.
-
-    Returns:
-        dict: Status of the model loading process.
-    """
     try:
         _load_model()
         return {"status": "ok"}
@@ -45,9 +38,6 @@ def health():
 
 @app.on_event("startup")
 def startup_event():
-    """
-    Startup event: preload the model and connect to MongoDB.
-    """
     _load_model()
     print("✅ Model preloaded")
     connect_db()
@@ -55,11 +45,12 @@ def startup_event():
 
 @app.on_event("shutdown")
 def shutdown_event():
-    """
-    Shutdown event: close MongoDB connection.
-    """
     close_db()
     print("🛑 MongoDB connection closed")
+
+if __name__ == "__main__": 
+    port = int(os.environ.get("PORT", 7860)) 
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
 
 @app.post("/generate")
 async def generate(data: CodePrompt, user=Depends(verify_token)):
