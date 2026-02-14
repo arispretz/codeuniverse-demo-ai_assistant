@@ -72,7 +72,6 @@ def generate_code(prompt: str, language: str = "python") -> str:
     return generate_response(input_text, max_tokens=100)
 
 def autocomplete_code(code: str, language: str = "python") -> str:
-    # completar una línea → 40 tokens
     input_text = f"# Language: {language}\n{code}\n# CONTINUE:\n"
     result = generate_response(input_text, max_tokens=40)
     if "# CONTINUE:" in result:
