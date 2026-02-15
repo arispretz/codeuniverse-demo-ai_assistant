@@ -18,25 +18,20 @@ def _load_model():
     if _llm is not None:
         return
 
-    repo_id = os.getenv("HF_REPO_ID", "TheBloke/CodeLlama-7B-Instruct-GGUF")
-    filename = os.getenv("HF_FILENAME", "codellama-7b-instruct.Q4_K_M.gguf")
-    local_dir = os.getenv("HF_LOCAL_DIR", "./models")
+    try:
+        repo_id = os.getenv("HF_REPO_ID")
+        filename = os.getenv("HF_FILENAME")
+        local_dir = os.getenv("HF_LOCAL_DIR")
 
-    model_path = hf_hub_download(
-        repo_id=repo_id,
-        filename=filename,
-        local_dir=local_dir
-    )
+        print(f"📥 Downloading model {repo_id}/{filename} to {local_dir}")
+        model_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir=local_dir)
 
-    _llm = Llama(
-        model_path=model_path,
-        n_threads=4,
-        n_ctx=512,
-        n_batch=128,
-        temperature=0.6,
-        verbose=False
-    )
+        _llm = Llama(model_path=model_path, n_threads=4, n_ctx=512, n_batch=128, temperature=0.6, verbose=False)
+        print("✅ Model loaded successfully")
 
+    except Exception as e:
+        print("❌ Error loading model:", traceback.format_exc())
+        raise
 
 def generate_response(prompt: str, max_tokens: int = 128, temperature: float = 0.7, stop=None) -> str:
     try:

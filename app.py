@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from models import CodePrompt, CodeRequest, CodeInput
 from ml_engine import (
-    generate_code, generate_reply, generate_reply_code_only, _load_model
+    generate_code, generate_reply, generate_reply_code_only, _load_model, autocomplete_code
 )
 from db import connect_db, close_db
 from auth import verify_token
