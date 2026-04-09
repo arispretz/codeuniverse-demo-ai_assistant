@@ -77,15 +77,6 @@ def autocomplete_code(code: str, language: str = "python") -> str:
     return result.strip()
 
 def _clean_mentor_response(text: str) -> str:
-    """
-    Clean mentor-style responses by removing unwanted patterns.
-
-    Args:
-        text (str): Raw model output.
-
-    Returns:
-        str: Cleaned response text.
-    """
     if not text:
         return ""
     result = text.strip()
@@ -94,17 +85,17 @@ def _clean_mentor_response(text: str) -> str:
         if result.lower().startswith(prefix):
             result = result[len(prefix):].strip()
 
-    result = re.sub(r"\\begin\{code\}[\s\S]*?\\end\{code\}", "", result, flags=re.IGNORECASE)
-    result = re.sub(r"```[\s\S]*?```", "", result)
-
     bad_patterns = [
-        r"edge_all_open_tabs\s*=\s*\[[\s\S]*?\]",
-        r"#\s*User.*browser.*tabs.*metadata.*",
+        r"edge_all_open_tabs[\s\S]*",
+        r"#\s*User.*Edge.*browser.*tabs.*metadata.*",
+        r"User.*Edge.*browser.*tabs.*metadata.*",
+        r"# User's Edge browser tabs metadata[\s\S]*",
         r"\bdef\s+_load_model\b",
         r"\bllama_cpp\b",
         r"\bimport\s+os\b",
         r"\btraceback\b",
     ]
+
     for pat in bad_patterns:
         result = re.sub(pat, "", result, flags=re.IGNORECASE)
 
@@ -117,7 +108,6 @@ def _clean_mentor_response(text: str) -> str:
     result = re.sub(r"(?i)^limitation\s*:", "Limitation:", result)
 
     return result
-
 
 def generate_reply(prompt: str, language: str, code: str, user_id: str, user_level: str) -> str:
     """
@@ -209,11 +199,14 @@ def generate_reply_code_only(prompt: str, language: str, code: str, user_id: str
     clean_lines = []
     func_started = False
     for line in response.splitlines():
-        if "BEGIN" in line or "END" in line:
+        if "# END" in line or "// END" in line:
+            clean_lines.append(line.strip())
+            break
+        if "edge_all_open_tabs" in line or "User" in line:
             continue
         if line.strip().startswith("#") and not line.strip().startswith("#!"):
             continue
-        if "edge_all_open_tabs" in line or "User" in line:
+        if line.strip().upper() in ["// START", "// END", "// BEGIN", "# START", "# END", "# BEGIN"]:
             continue
         if ("function " in line or line.strip().startswith("def ")) and func_started:
             continue
@@ -224,11 +217,15 @@ def generate_reply_code_only(prompt: str, language: str, code: str, user_id: str
     response = "\n".join(clean_lines).strip()
 
     if language.lower() == "python":
-        response = response.rstrip() + "\n# END"
+        if not response.endswith("# END"):
+            response = response.rstrip() + "\n# END"
     elif language.lower() in ["javascript", "java", "c++", "c"]:
-        if "}" in response:
-            response = response[:response.rfind("}")+1] + "\n// END"
-        else:
-            response += "\n// END"
+        if not response.endswith("// END"):
+            if "}" in response:
+                response = response[:response.rfind("}")+1] + "\n// END"
+            else:
+                response += "\n// END"
 
     return response
+
+
